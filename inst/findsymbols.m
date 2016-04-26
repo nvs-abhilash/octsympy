@@ -1,4 +1,4 @@
-%% Copyright (C) 2014 Colin B. Macdonald
+%% Copyright (C) 2014, 2016 Colin B. Macdonald
 %%
 %% This file is part of OctSymPy.
 %%
@@ -21,7 +21,7 @@
 %% @deftypefn  {Function File} {@var{l} =} findsymbols (@var{x})
 %% Return a list (cell array) of the symbols in an expression.
 %%
-%% The list is sorted alphabetically.  @xref{symvar}, for details.
+%% The list is sorted alphabetically.  For details, @pxref{@@sym/symvar}.
 %%
 %% If two variables have the same symbol but different assumptions,
 %% they will both appear in the output.  It is not well-defined
@@ -31,24 +31,24 @@
 %%
 %% @example
 %% @group
-%% >> syms x y z
-%% >> C = @{x, 2*x*y, [1 x; sin(z) pi]@};
-%% >> findsymbols (C)
-%%    @result{}
-%%      @{
-%%        (sym) x
-%%        (sym) y
-%%        (sym) z
-%%      @}
+%% syms x y z
+%% C = @{x, 2*x*y, [1 x; sin(z) pi]@};
+%% findsymbols (C)
+%%   @result{} ans =
+%%       @{
+%%         (sym) x
+%%         (sym) y
+%%         (sym) z
+%%       @}
 %% @end group
 %% @end example
 %%
-%% Note E, I, pi, etc are not counted as symbols.
+%% Note ℯ, ⅈ, π, etc are not considered as symbols.
 %%
 %% Note only returns symbols actually appearing in the RHS of a
 %% @code{symfun}.
 %%
-%% @seealso{symvar, findsym}
+%% @seealso{symvar, @@sym/symvar, @@sym/findsym}
 %% @end deftypefn
 
 %% Author: Colin B. Macdonald
@@ -62,7 +62,7 @@ function L = findsymbols(obj, dosort)
 
   if isa(obj, 'sym')
     cmd = { 'x = _ins[0]'
-            'if sympy.__version__ == "0.7.5":'   % deprecate with Issue #164
+            'if Version(spver) < Version("0.7.6"):'   % deprecate with Issue #164
             '    if not x.is_Matrix:'
             '        s = x.free_symbols'
             '    else:'
@@ -139,6 +139,16 @@ end
 %!assert (isempty (findsymbols (exp (sym (2)))))
 
 %!test
+%! % empty sym for findsymbols, findsym, and symvar
+%! if (python_cmd ('return Version(spver) < Version("0.7.7.dev"),'))
+%!   fprintf('\n  skipping: findsymbols of empty sym broken before SymPy 0.7.7\n')
+%! else
+%!   assert (isempty (findsymbols (sym([]))))
+%!   assert (isempty (findsym (sym([]))))
+%!   assert (isempty (symvar (sym([]))))
+%! end
+
+%!test
 %! % diff. assumptions make diff. symbols
 %! x1 = sym('x');
 %! x2 = sym('x', 'positive');
@@ -175,11 +185,7 @@ end
 %! % symbols in matpow
 %! syms x y
 %! syms n
-%! if (str2num(strrep(python_cmd ('return sp.__version__,'), '.', ''))<=75)
-%!   disp('skipping known failure b/c SymPy <= 0.7.5')
-%! else
-%!   A = [sin(x) 2; y 1];
-%!   B = A^n;
-%!   L = findsymbols(B);
-%!   assert (isequal (L, {n x y}))
-%! end
+%! A = [sin(x) 2; y 1];
+%! B = A^n;
+%! L = findsymbols(B);
+%! assert (isequal (L, {n x y}))

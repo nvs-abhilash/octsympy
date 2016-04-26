@@ -17,9 +17,32 @@
 %% If not, see <http://www.gnu.org/licenses/>.
 
 %% -*- texinfo -*-
+%% @documentencoding UTF-8
 %% @deftypefn  {Function File} {@var{B} =} inv (@var{A})
 %% Symbolic inverse of a matrix.
 %%
+%% Examples:
+%% @example
+%% @group
+%% A = sym([1 2; 3 4]);
+%% inv(A)
+%%   @result{} ans = (sym 2×2 matrix)
+%%       ⎡-2    1  ⎤
+%%       ⎢         ⎥
+%%       ⎣3/2  -1/2⎦
+%% @end group
+%% @end example
+%%
+%% If the matrix is singular, an error is raised:
+%% @example
+%% @group
+%% A = sym([1 2; 1 2]);
+%% inv(A)
+%%   @print{} ??? ... Matrix det == 0; not invertible...
+%% @end group
+%% @end example
+%%
+%% @seealso{ldivide, rdivide}
 %% @end deftypefn
 
 %% Author: Colin B. Macdonald
@@ -27,16 +50,13 @@
 
 function z = inv(x)
 
-  [n,m] = size(x);
-  if n ~= m
-    error('matrix is not square')
-  end
-
-  cmd = { 'x, = _ins'
-          'if x.is_Matrix:'
-          '    return x.inv(),'
-          'else:'
-          '    return S.One/x,' };
+  cmd = {
+        'x, = _ins'
+        'if x.is_Matrix:'
+        '    return x.inv(),'
+        'else:'
+        '    return S.One/x,'
+        };
 
   z = python_cmd (cmd, x);
 
@@ -59,3 +79,13 @@ end
 %! % 2x2 inverse
 %! A = [1 2; 3 4];
 %! assert (max (max (abs (double (inv (sym (A))) - inv(A)))) <= 3*eps)
+
+%!error <not invertible>
+%! syms a;
+%! A = [a a; a a];
+%! inv(A)
+
+%!error <NonSquareMatrixError>
+%! syms a;
+%! A = [a a];
+%! inv(A)

@@ -21,6 +21,37 @@
 %% @deftypefn {Function File} {@var{y} =} not (@var{x})
 %% Logical not of a symbolic array.
 %%
+%% Example:
+%% @example
+%% @group
+%% syms x y
+%% eqn = 2*x == y
+%%   @result{} eqn = (sym) 2⋅x = y
+%% not(eqn)
+%%   @result{} ans = (sym) 2⋅x ≠ y
+%% @end group
+%% @end example
+%%
+%% More briefly:
+%% @example
+%% @group
+%% ~(x==y)
+%%   @result{} ans = (sym) x ≠ y
+%% !(x==y)
+%%   @result{} ans = (sym) x ≠ y
+%% @end group
+%% @end example
+%%
+%% Applies to each entry of a matrix:
+%% @example
+%% @group
+%% A = [x < y, 2*x + y >= 0, true]
+%%   @result{} A = (sym) [x < y  2⋅x + y ≥ 0  True]  (1×3 matrix)
+%% ~A
+%%   @result{} ans = (sym) [x ≥ y  2⋅x + y < 0  False]  (1×3 matrix)
+%% @end group
+%% @end example
+%%
 %% @seealso{eq, ne, logical, isAlways, isequal}
 %% @end deftypefn
 
@@ -29,54 +60,8 @@
 
 function r = not(x)
 
-  % not the same as:
-  %y = ~logical(x);
+  r = uniop_helper (x, 'Not');
 
-  % FIXME: simpler version? don't micromanage sympy but gives ~x
-  %  '    try:'
-  %  '        return Not(p)'
-  %  '    except:'
-  %  '        raise TE'
-
-  % cf., logical, isAlways
-
-  cmd = {
-    '(p,) = _ins'
-    'def scalar_case(p,):'
-    '    TE = TypeError("cannot logically negate sym \"%s\"" % str(p))'
-    '    if sympy.__version__ == "0.7.5":' % later Not(p) below ok
-    '        if isinstance(p, Eq): return Ne(p.lhs, p.rhs)'
-    '        elif isinstance(p, Ne): return Eq(p.lhs, p.rhs)'
-    '        elif isinstance(p, Lt): return Ge(p.lts, p.gts)'
-    '        elif isinstance(p, Le): return Gt(p.lts, p.gts)'
-    '        elif isinstance(p, Gt): return Le(p.gts, p.lts)'
-    '        elif isinstance(p, Ge): return Lt(p.gts, p.lts)'
-    '    if p is nan:'
-    '        raise TE'  % FIXME: check SMT
-    '    elif isinstance(p, (BooleanFunction, Relational)):'
-    '        return Not(p)'
-    '    elif p in (S.true, S.false):'
-    '        return Not(p)'
-    '    elif p.is_number:'
-    '        return S(not bool(p))'
-    '    else:'
-    '        raise TE'
-    'try:'
-    '    if p.is_Matrix:'
-    '        r = p.applyfunc(lambda a: scalar_case(a))'
-    '    else:'
-    '        r = scalar_case(p)'
-    '    flag = True'
-    'except TypeError as e:'
-    '    r = str(e)'
-    '    flag = False'
-    'return (flag, r)' };
-
-  [flag, r] = python_cmd (cmd, x);
-  if (~flag)
-    assert (ischar (r), '<not>: programming error?')
-    error(['<not>: ' r])
-  end
 end
 
 
@@ -107,9 +92,8 @@ end
 %! assert (isa (e, 'sym'))
 %! assert (strncmp(char(e), 'Unequality', 10))
 
-%!xtest
-%! % output is sym even for scalar t/f
-%! % ₣IXME: should match other bool fcns
+%!test
+%! % output is sym even for scalar t/f (should match other bool fcns)
 %! assert (isa (~t, 'sym'))
 
 %!test
@@ -120,13 +104,7 @@ end
 %! assert (isequal( ~a, b))
 
 %!test
-%! % symbol ineq
 %! syms x
-%! try
-%!   y = ~x
-%!   waserr = false;
-%! catch
-%!   waserr = true;
-%! end
-%! assert (waserr)
-
+%! y = ~x;
+%! s = disp(y, 'flat');
+%! assert (strcmpi(strtrim(s), 'Not(x)'))

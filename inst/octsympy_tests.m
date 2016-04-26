@@ -1,4 +1,4 @@
-%% Copyright (C) 2014 Colin B. Macdonald
+%% Copyright (C) 2014, 2016 Colin B. Macdonald
 %%
 %% This file is part of OctSymPy.
 %%
@@ -18,7 +18,7 @@
 
 %% -*- texinfo -*-
 %% @deftypefn  {Function File} {@var{r} =} octsympy_tests ()
-%% Run the OctSymPy tests, log results, and return true if passing.
+%% Run the OctSymPy tests, log results, and return true if any fail.
 %%
 %% I threw this together by modifying "__run_test_suite__.m" which
 %% is Copyright (C) 2005-2013 David Bateman and part of GNU Octave,
@@ -215,7 +215,7 @@ function [dp, dn, dxf, dsk, FWT, FWNT] = run_test_script (fid, d);
       p = n = xf = 0;
       ## Only run if it contains %!test, %!assert, %!error, %!fail, or %!warning
       if (has_tests (f))
-	tmp = f;
+        tmp = f;
         print_test_file_name (tmp);
         [p, n, xf, sk] = test (f, "quiet", fid);
         if (compare_versions (OCTAVE_VERSION (), '3.9', '<'))
@@ -226,7 +226,7 @@ function [dp, dn, dxf, dsk, FWT, FWNT] = run_test_script (fid, d);
         dn += n;
         dxf += xf;
         dsk += sk;
-	FWT{end+1} = f;
+        FWT{end+1} = f;
       else
         ## To reduce the list length, only mark .cc files that contain
         ## DEFUN definitions.

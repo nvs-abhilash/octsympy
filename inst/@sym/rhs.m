@@ -1,4 +1,4 @@
-%% Copyright (C) 2014 Colin B. Macdonald
+%% Copyright (C) 2014, 2016 Colin B. Macdonald
 %%
 %% This file is part of OctSymPy.
 %%
@@ -17,12 +17,24 @@
 %% If not, see <http://www.gnu.org/licenses/>.
 
 %% -*- texinfo -*-
+%% @documentencoding UTF-8
 %% @deftypefn  {Function File} {@var{L} =} rhs (@var{f})
 %% Right-hand side of symbolic expression.
 %%
+%% Example:
+%% @example
+%% @group
+%% syms x
+%% eqn = 5*x <= 3*x + 6
+%%   @result{} eqn = (sym) 5⋅x ≤ 3⋅x + 6
+%% rhs(eqn)
+%%   @result{} ans = (sym) 3⋅x + 6
+%% @end group
+%% @end example
+%%
 %% Gives an error if any of the symbolic objects have no right-hand side.
 %%
-%% @seealso{lhs, children}
+%% @seealso{lhs, children, formula, argnames}
 %% @end deftypefn
 
 %% Author: Colin B. Macdonald
@@ -30,27 +42,7 @@
 
 function R = rhs(f)
 
-  cmd = {
-    'f, = _ins'
-    'flag = 0'
-    'r = 0'
-    'if f.is_Matrix:'
-    '    try:'
-    '        r = f.applyfunc(lambda a: a.rhs)'
-    '    except:'
-    '        flag = 1'
-    'else:'
-    '    try:'
-    '        r = f.rhs'
-    '    except:'
-    '        flag = 1'
-    'return (flag, r)' };
-
-  [flag, R] = python_cmd (cmd, f);
-
-  if (flag)
-    error('rhs: one or more entries have no ''rhs'' attribute')
-  end
+  R = uniop_helper(f, 'lambda a: a.rhs');
 
 end
 
@@ -61,3 +53,6 @@ end
 %! f = x + 1 == 2*x;
 %! assert (isequal (rhs(f), 2*x))
 
+%!error <AttributeError>
+%! syms x
+%! rhs(x)
