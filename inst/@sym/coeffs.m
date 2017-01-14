@@ -109,15 +109,14 @@
 function [c, t] = coeffs(p, x, all)
 
   if (nargin == 1)
-    % don't use symvar: if input has x, y we want both
-    x = {};
+    x = [];
     all = false;
   elseif (nargin == 2)
     if (ischar (x))
       if (~ strcmpi (x, 'all'))
         error ('coeffs: invalid 2nd input: if string, should be "all"')
       end
-      x = {};
+      x = [];
       all = true;
     else
       x = sym(x);
@@ -136,9 +135,16 @@ function [c, t] = coeffs(p, x, all)
     error('coeffs: works for scalar input only');
   end
 
+  p = sym(p);
+
+  if (isempty (x))
+    x = symvar (p);
+    if (isempty (x))
+      x = sym('x');  % any symbol
+    end
+  end
+
   cmd = { '(f, xx, all) = _ins'
-          'if xx == [] and f.is_constant():'  % special case
-          '    xx = sympy.S("x")'
           'try:'
           '    xx = list(xx)'
           'except TypeError:'
@@ -154,7 +160,7 @@ function [c, t] = coeffs(p, x, all)
           '    tt = [t*x**q[0][i] for (t, q) in zip(tt, terms)]'
           'return (Matrix([cc]), Matrix([tt]))' };
 
-  [c, t] = python_cmd (cmd, sym(p), x, all);
+  [c, t] = python_cmd (cmd, p, x, all);
 
   %% SMT compat:
   % reverse the order if t is not output.
@@ -269,3 +275,12 @@ end
 %!test
 %! % constant input without x
 %! assert (isequal (coeffs(sym(6)), sym(6)))
+
+%!test
+%! % irrational coefficients
+%! syms x
+%! f = x^2 + sqrt(sym(2))*x;
+%! [c1, t1] = coeffs (f);
+%! [c2, t2] = coeffs (f, x);
+%! assert (isequal (c1, c2))
+%! assert (isequal (t1, t2))
